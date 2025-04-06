@@ -5,10 +5,10 @@ import time
 import os
 from langchain.prompts import ChatPromptTemplate
 
-# ✅ Page setup
+# Page setup
 st.set_page_config(page_title="বাংলা থেরাপি চ্যাটবট", page_icon="🧠", layout="wide")
 
-# ✅ Sidebar setup
+# Sidebar setup
 with st.sidebar:
     st.title("⚙️ Settings")
 
@@ -38,21 +38,21 @@ with st.sidebar:
         requests.get("http://192.168.0.104:1235/v1/models", timeout=5)
         st.success("✅ লোকাল মডেল কানেক্টেড")
     except:
-        st.error("❌ সার্ভার চালু নেই")
+        st.error("❌ সার্ভার চালু নাই")
 
     # Clear history button
     if st.button("🗑️ Clear chat history"):
         st.session_state.messages = []
         st.rerun()
 
-# ✅ Session state initialization
+# Session state initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "documents" not in st.session_state:
     st.session_state.documents = []
 
-# ✅ Context retrieval function
+# Context retrieval function
 def retrieve_context(user_prompt):
     keywords = user_prompt.lower().split()
     relevant = [doc for doc in st.session_state.documents if any(word in doc.lower() for word in keywords)]
@@ -87,9 +87,9 @@ def query_llm(user_prompt):
             return f"❌ API ত্রুটি: {response.status_code} - {response.text}"
 
     except requests.Timeout:
-        return "❌ সময় শেষ হয়ে গেছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+        return "❌ সময় শেষ ভাইয়া।"
     except requests.ConnectionError:
-        return "❌ সার্ভারে সংযোগ করতে পারছি না। অনুগ্রহ করে নিশ্চিত করুন যে LM Studio চালু আছে।"
+        return "❌ সার্ভারে সংযোগ পাইনা। LM Studio চালু আছে কিনা দ্যাখ?।"
     except Exception as e:
         return f"❌ ত্রুটি:\n{e}"
 
