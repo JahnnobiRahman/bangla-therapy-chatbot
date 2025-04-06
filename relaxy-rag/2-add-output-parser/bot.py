@@ -2,29 +2,82 @@ import streamlit as st
 import requests
 from datetime import datetime
 import time
+import os
+from langchain.prompts import ChatPromptTemplate
 
-# Initialize session state for chat history
+# Page setup
+st.set_page_config(page_title="বাংলা থেরাপি চ্যাটবট", page_icon="🧠", layout="wide")
+
+# Sidebar setup
+with st.sidebar:
+    st.title("⚙️ Settings")
+
+    # Show current working directory
+    cwd = os.getcwd()
+    
+    st.markdown("📁 **Current Working Directory:**")
+    st.code(cwd)
+
+    file_path = os.path.join(cwd, "/Users/jahnnobirahman/Desktop/python/allcode/projects/l01/relaxy-rag/therapy_knowledge.txt")
+    st.markdown("📄 **Trying to load file from:**")
+    st.code(file_path)
+
+    # Load the file and preview
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            docs = f.readlines()
+            st.session_state.documents = docs
+            st.success("✅ File loaded successfully!")
+            st.markdown("📄 Preview of file:")
+            st.code("".join(docs[:5]), language="text")
+    except Exception as e:
+        st.error(f"❌ File loading failed:\n{e}")
+
+    # Server status check
+    try:
+        requests.get("http://192.168.0.104:1235/v1/models", timeout=5)
+        st.success("✅ লোকাল মডেল কানেক্টেড")
+    except:
+        st.error("❌ সার্ভার চালু নাই")
+
+    # Clear history button
+    if st.button("🗑️ Clear chat history"):
+        st.session_state.messages = []
+        st.rerun()
+
+# Session state initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-def query_llm(prompt):
+if "documents" not in st.session_state:
+    st.session_state.documents = []
+
+# Context retrieval function
+def retrieve_context(user_prompt):
+    keywords = user_prompt.lower().split()
+    relevant = [doc for doc in st.session_state.documents if any(word in doc.lower() for word in keywords)]
+    return "\n".join(relevant[:3])
+
+# ✅ Query the local LLM (Qwen 1.5 - 1.8B) with context
+def query_llm(user_prompt):
     try:
-        # Add timeout to the request
+        context = retrieve_context(user_prompt)
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", "আপনি একজন সহানুভূতিশীল বাংলা থেরাপিস্ট। নিচে কিছু কনটেক্সট দেয়া হলো:\n{context}"),
+            ("user", "{question}")
+        ])
+        final_prompt = prompt_template.format(context=context, question=user_prompt)
+
         response = requests.post(
-            "http://192.168.0.125:1234/v1/chat/completions",
+            "http://192.168.0.104:1235/v1/chat/completions",
             headers={"Content-Type": "application/json"},
             json={
-                "model": "llama-3.2-3b-instruct",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": f"""আপনি একজন সহানুভূতিশীল বাংলা থেরাপিস্ট।
-আমার প্রশ্ন: {prompt}"""
-                    }
-                ],
-                "temperature": 0.5
+                "model": "Qwen1.5-1.8B-Chat-GGUF",
+                "messages": [{"role": "user", "content": final_prompt}],
+                "temperature": 0.7,
+                "max_tokens": 500
             },
-            timeout=30  # 30 seconds timeout
+            timeout=20
         )
 
         if response.status_code == 200:
@@ -34,88 +87,51 @@ def query_llm(prompt):
             return f"❌ API ত্রুটি: {response.status_code} - {response.text}"
 
     except requests.Timeout:
-        return "❌ সময় শেষ হয়ে গেছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+        return "❌ সময় শেষ ভাইয়া।"
     except requests.ConnectionError:
-        return "❌ সার্ভারে সংযোগ করতে পারছি না। অনুগ্রহ করে নিশ্চিত করুন যে LM Studio চালু আছে।"
+        return "❌ সার্ভারে সংযোগ পাইনা। LM Studio চালু আছে কিনা দ্যাখ?।"
     except Exception as e:
         return f"❌ ত্রুটি:\n{e}"
 
-# Page configuration
-st.set_page_config(
-    page_title="বাংলা থেরাপি চ্যাটবট",
-    page_icon="🧠",
-    layout="wide"
-)
-
-# Custom CSS
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input {
-        background-color: #f0f2f6;
-    }
-    .stMarkdown {
-        font-family: 'SolaimanLipi', Arial, sans-serif;
-    }
-    .stSpinner > div {
-        border-top-color: #FF4B4B;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Sidebar
-with st.sidebar:
-    st.title("⚙️ Settings")
-    if st.button("🗑️ Clear chat history"):
-        st.session_state.messages = []
-        st.rerun()
-    
-    # Server status indicator
-    try:
-        requests.get("http://192.168.0.125:1234/v1/models", timeout=5)
-        st.success("✅ সার্ভার আছে ভাই")
-    except:
-        st.error("❌ সার্ভার নাই ভাই")
-
-# Main content
+# ✅ Main content
 st.title("🧠 বাংলা থেরাপি চ্যাটবট 🤖💬")
 
-# Display chat messages
+# Show chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
         st.caption(message["timestamp"])
 
-# Chat input
+# Chat input from user
 if prompt := st.chat_input("✍️ কি ভাবেন? আমার সাথে কথা বলেন..."):
-    # Add user message to chat history
+    # Save user message
     st.session_state.messages.append({
         "role": "user",
         "content": prompt,
         "timestamp": datetime.now().strftime("%H:%M")
     })
-    
+
     # Display user message
     with st.chat_message("user"):
         st.markdown(prompt)
         st.caption(datetime.now().strftime("%H:%M"))
 
-    # Get and display assistant response
+    # Get assistant response
     with st.chat_message("assistant"):
-        with st.spinner("⏳ ওয়েট, ভাবতে দেন..."):
+        with st.spinner("⏳ ভাবছি..."):
             start_time = time.time()
             response = query_llm(prompt)
             end_time = time.time()
-            
+
             st.markdown(response)
             st.caption(f"{datetime.now().strftime('%H:%M')} • {end_time - start_time:.1f} সেকেন্ড")
-            
-            # Add assistant response to chat history
+
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": response,
                 "timestamp": datetime.now().strftime("%H:%M")
             })
 
-# Footer
+# ✅ Footer
 st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit and llama-3.2-3b-instruct")
+st.markdown("Made with ❤️ using Streamlit + Qwen1.5-1.8B-Chat-GGUF + LangChain")
