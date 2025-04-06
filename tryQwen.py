@@ -14,7 +14,7 @@ def query_llm(prompt):
             "http://192.168.0.125:1234/v1/chat/completions",
             headers={"Content-Type": "application/json"},
             json={
-                "model": "Qwen1.5-1.8B-Chat-GGUF",
+                "model": "llama-3.2-3b-instruct",
                 "messages": [
                     {
                         "role": "user",
@@ -118,4 +118,4 @@ if prompt := st.chat_input("✍️ কি ভাবেন? আমার সা�
 
 # Footer
 st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit and Qwen1.5-1.8B-Chat-GGUF")
+st.markdown("Made with ❤️ using Streamlit and llama-3.2-3b-instruct")
