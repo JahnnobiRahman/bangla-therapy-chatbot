@@ -1,11 +1,11 @@
 # বাংলা থেরাপি চ্যাটবট (Bangla Therapy Chatbot)
 
-A Streamlit-based chatbot application that provides therapeutic conversations in Bangla using the Qwen1.5-1.8B-Chat-GGUF model through LM Studio.
+A Streamlit-based chatbot application that provides therapeutic conversations in Bangla using the Qwen1.5-1.8B-Chat-GGUF & llama-3.2-3b-instruct model through LM Studio.
 
 ## Features
 
 - 💬 Interactive chat interface in Bangla
-- 🧠 Powered by Qwen1.5-1.8B-Chat-GGUF model
+- 🧠 Powered by Qwen1.5-1.8B-Chat-GGUF model & "llama-3.2-3b-instruct"
 - ⚡ Real-time responses
 - 📱 Mobile-friendly design
 - 🔄 Chat history persistence
