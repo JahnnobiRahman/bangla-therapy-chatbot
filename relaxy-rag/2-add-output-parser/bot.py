@@ -4,6 +4,8 @@ from datetime import datetime
 import time
 import os
 from langchain.prompts import ChatPromptTemplate
+from langchain.output_parsers import StructuredOutputParser, ResponseSchema #added output parser and response schema
+
 
 # Page setup
 st.set_page_config(page_title="বাংলা থেরাপি চ্যাটবট", page_icon="🧠", layout="wide")
@@ -58,7 +60,16 @@ def retrieve_context(user_prompt):
     relevant = [doc for doc in st.session_state.documents if any(word in doc.lower() for word in keywords)]
     return "\n".join(relevant[:3])
 
-# ✅ Query the local LLM (Qwen 1.5 - 1.8B) with context
+
+#  Structured output schema
+response_schemas = [
+    ResponseSchema(name="problem", description="ইউজারের মূল সমস্যা"),
+    ResponseSchema(name="suggestion", description="সাইকোলজিস্টের পরামর্শ")
+]
+parser = StructuredOutputParser.from_response_schemas(response_schemas)
+format_instructions = parser.get_format_instructions()
+
+#  Query the local LLM (Qwen 1.5 - 1.8B) with context
 def query_llm(user_prompt):
     try:
         context = retrieve_context(user_prompt)
@@ -93,7 +104,7 @@ def query_llm(user_prompt):
     except Exception as e:
         return f"❌ ত্রুটি:\n{e}"
 
-# ✅ Main content
+#  Main content
 st.title("🧠 বাংলা থেরাপি চ্যাটবট 🤖💬")
 
 # Show chat history
@@ -132,6 +143,6 @@ if prompt := st.chat_input("✍️ কি ভাবেন? আমার সা�
                 "timestamp": datetime.now().strftime("%H:%M")
             })
 
-# ✅ Footer
+#  Footer
 st.markdown("---")
 st.markdown("Made with ❤️ using Streamlit + Qwen1.5-1.8B-Chat-GGUF + LangChain")
