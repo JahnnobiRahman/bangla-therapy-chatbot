@@ -8,7 +8,6 @@ from langchain.schema import AIMessage, HumanMessage, SystemMessage
 import unicodedata
 
 
-
 #System Prompts for Each Mode : Scribe, emotional, teaching and urgency
 SCRIBE_PROMPT = """আপনি একজন সহানুভূতিশীল বাংলা থেরাপিস্ট।
 আপনার মূল কাজ হলো ইউজারের কথাগুলো মনোযোগ দিয়ে শোনা এবং সংক্ষেপে প্রতিফলন করা। কোন পরামর্শ, সমাধান বা প্রশংসা না দিয়ে শুধুমাত্র সহানুভূতির সাথে উত্তর দিন।"""
@@ -76,7 +75,7 @@ with st.sidebar:
 
     # Server status check
     try:
-        requests.get("http://127.0.0.1:1234/v1/models", timeout=5)
+        requests.get("http://127.0.0.1:1236/v1/models", timeout=5)
         st.success("✅ লোকাল মডেল কানেক্টেড")
     except:
         st.error("❌ সার্ভার চালু নাই")
@@ -116,15 +115,15 @@ def query_llm(user_prompt):
         final_prompt = f"""{mode_prompt}\n\nসাধারণ জ্ঞান:\n{context}\n\nপ্রশ্ন: {normalized_prompt}"""
 
         response = requests.post(
-            "http://127.0.0.1:1234/v1/chat/completions",
+            "http://127.0.0.1:1236/v1/chat/completions",
             headers={"Content-Type": "application/json"},
             json={
-                "model": "qwen1.5-1.8b-chat",
+                "model": "qwen3-4b@q4_k_m",
                 "messages": [{"role": "user", "content": final_prompt}],
                 "temperature": 0.7,
-                "max_tokens": 500
+                "max_tokens": 200
             },
-            timeout=20
+            timeout=40
         )
 
         if response.status_code == 200:
@@ -183,5 +182,6 @@ if prompt := st.chat_input("✍️ কি ভাবেন? আমার সা�
             })
 
 # Footer
-st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit + qwen1.5-1.8b-chat + LangChain")
+#st.markdown("---")
+#st.markdown("Made with ❤️ using Streamlit + qwen1.5-1.8b-chat + LangChain")
+
